@@ -49284,10 +49284,6 @@ spec:
                         type: array
                     type: object
                 type: object
-              taskResultsCompleted:
-                additionalProperties:
-                  type: boolean
-                type: object
             type: object
         required:
         - metadata

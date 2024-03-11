@@ -258,8 +258,7 @@ func (w *When) WaitForWorkflow(options ...interface{}) *When {
 	for _, opt := range options {
 		switch v := opt.(type) {
 		case time.Duration:
-			// Note that we add the timeoutBias (defaults to 0), set by environment variable E2E_WAIT_TIMEOUT_BIAS
-			timeout = v + timeoutBias
+			timeout = v - 30*time.Second + defaultTimeout
 		case string:
 			workflowName = v
 		case Condition:
