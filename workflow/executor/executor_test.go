@@ -25,7 +25,6 @@ import (
 const (
 	fakePodName       = "fake-test-pod-1234567890"
 	fakeWorkflow      = "my-wf"
-	fakeWorkflowUID   = "my-wf-uid"
 	fakePodUID        = "my-pod-uid"
 	fakeNodeID        = "my-node-id"
 	fakeNamespace     = "default"
@@ -366,7 +365,6 @@ func TestChmod(t *testing.T) {
 func TestSaveArtifacts(t *testing.T) {
 	fakeClientset := fake.NewSimpleClientset()
 	mockRuntimeExecutor := mocks.ContainerRuntimeExecutor{}
-	mockTaskResultClient := argofake.NewSimpleClientset().ArgoprojV1alpha1().WorkflowTaskResults(fakeNamespace)
 	templateWithOutParam := wfv1.Template{
 		Inputs: wfv1.Inputs{
 			Artifacts: []wfv1.Artifact{
@@ -433,34 +431,31 @@ func TestSaveArtifacts(t *testing.T) {
 	}{
 		{
 			workflowExecutor: WorkflowExecutor{
-				PodName:          fakePodName,
-				Template:         templateWithOutParam,
-				ClientSet:        fakeClientset,
-				Namespace:        fakeNamespace,
-				RuntimeExecutor:  &mockRuntimeExecutor,
-				taskResultClient: mockTaskResultClient,
+				PodName:         fakePodName,
+				Template:        templateWithOutParam,
+				ClientSet:       fakeClientset,
+				Namespace:       fakeNamespace,
+				RuntimeExecutor: &mockRuntimeExecutor,
 			},
 			expectError: false,
 		},
 		{
 			workflowExecutor: WorkflowExecutor{
-				PodName:          fakePodName,
-				Template:         templateOptionFalse,
-				ClientSet:        fakeClientset,
-				Namespace:        fakeNamespace,
-				RuntimeExecutor:  &mockRuntimeExecutor,
-				taskResultClient: mockTaskResultClient,
+				PodName:         fakePodName,
+				Template:        templateOptionFalse,
+				ClientSet:       fakeClientset,
+				Namespace:       fakeNamespace,
+				RuntimeExecutor: &mockRuntimeExecutor,
 			},
 			expectError: true,
 		},
 		{
 			workflowExecutor: WorkflowExecutor{
-				PodName:          fakePodName,
-				Template:         templateZipArchive,
-				ClientSet:        fakeClientset,
-				Namespace:        fakeNamespace,
-				RuntimeExecutor:  &mockRuntimeExecutor,
-				taskResultClient: mockTaskResultClient,
+				PodName:         fakePodName,
+				Template:        templateZipArchive,
+				ClientSet:       fakeClientset,
+				Namespace:       fakeNamespace,
+				RuntimeExecutor: &mockRuntimeExecutor,
 			},
 			expectError: false,
 		},
@@ -498,7 +493,6 @@ func TestMonitorProgress(t *testing.T) {
 		fakePodName,
 		fakePodUID,
 		fakeWorkflow,
-		fakeWorkflowUID,
 		fakeNodeID,
 		fakeNamespace,
 		&mocks.ContainerRuntimeExecutor{},
@@ -540,39 +534,7 @@ func TestSaveLogs(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		logArtifacts := we.SaveLogs(ctx)
-
+		we.SaveLogs(ctx)
 		assert.EqualError(t, we.errors[0], artStorageError)
-		assert.Empty(t, logArtifacts)
 	})
-}
-
-func TestReportOutputs(t *testing.T) {
-	mockRuntimeExecutor := mocks.ContainerRuntimeExecutor{}
-	mockTaskResultClient := argofake.NewSimpleClientset().ArgoprojV1alpha1().WorkflowTaskResults(fakeNamespace)
-	t.Run("Simple report output", func(t *testing.T) {
-		artifacts := []wfv1.Artifact{
-			{
-				Name: "samedir",
-				Path: "/samedir",
-			},
-		}
-		templateWithArtifacts := wfv1.Template{
-			Inputs: wfv1.Inputs{
-				Artifacts: artifacts,
-			},
-		}
-		we := WorkflowExecutor{
-			Template:         templateWithArtifacts,
-			RuntimeExecutor:  &mockRuntimeExecutor,
-			taskResultClient: mockTaskResultClient,
-		}
-
-		ctx := context.Background()
-		err := we.ReportOutputs(ctx, artifacts)
-
-		assert.Equal(t, err, nil)
-		assert.Empty(t, we.errors)
-	})
-
 }

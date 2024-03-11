@@ -118,7 +118,6 @@ func initExecutor() *executor.WorkflowExecutor {
 		podName,
 		types.UID(os.Getenv(common.EnvVarPodUID)),
 		os.Getenv(common.EnvVarWorkflowName),
-		types.UID(os.Getenv(common.EnvVarWorkflowUID)),
 		os.Getenv(common.EnvVarNodeID),
 		namespace,
 		cre,

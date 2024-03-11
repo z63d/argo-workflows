@@ -26,12 +26,7 @@ func NewWaitCommand() *cobra.Command {
 
 func waitContainer(ctx context.Context) error {
 	wfExecutor := initExecutor()
-
-	// Don't allow cancellation to impact capture of results, parameters, artifacts, or defers.
-	bgCtx := context.Background()
-
-	defer wfExecutor.HandleError(bgCtx)    // Must be placed at the bottom of defers stack.
-	defer wfExecutor.FinalizeOutput(bgCtx) // Ensures the LabelKeyReportOutputsCompleted is set to true.
+	defer wfExecutor.HandleError(ctx) // Must be placed at the bottom of defers stack.
 	defer stats.LogStats()
 	stats.StartStatsTicker(5 * time.Minute)
 
@@ -40,33 +35,24 @@ func waitContainer(ctx context.Context) error {
 	if err != nil {
 		wfExecutor.AddError(err)
 	}
-
+	ctx = context.Background() // don't allow cancellation to impact capture of results, parameters,or artifacts
 	// Capture output script result
-	err = wfExecutor.CaptureScriptResult(bgCtx)
+	err = wfExecutor.CaptureScriptResult(ctx)
 	if err != nil {
 		wfExecutor.AddError(err)
 	}
 
 	// Saving output parameters
-	err = wfExecutor.SaveParameters(bgCtx)
+	err = wfExecutor.SaveParameters(ctx)
 	if err != nil {
 		wfExecutor.AddError(err)
 	}
-
 	// Saving output artifacts
-	err = wfExecutor.SaveArtifacts(bgCtx)
+	err = wfExecutor.SaveArtifacts(ctx)
 	if err != nil {
 		wfExecutor.AddError(err)
 	}
 
-	// Save log artifacts
-	logArtifacts := wfExecutor.SaveLogs(bgCtx)
-
-	// Try to upsert TaskResult. If it fails, we will try to update the Pod's Annotations
-	err = wfExecutor.ReportOutputs(bgCtx, logArtifacts)
-	if err != nil {
-		wfExecutor.AddError(err)
-	}
-
+	wfExecutor.SaveLogs(ctx)
 	return wfExecutor.HasError()
 }
